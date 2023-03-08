@@ -77,22 +77,20 @@ module.exports = function(grunt) {
                ]
       }
     },
-    jscs: {
-      options: {
-        config: '.jscs.json',
+    watch: {
+      scripts: {
+        files: ['**/*.js'],
+        tasks: ['default'],
+        options: {
+          spawn: false,
+        },
       },
-      main: [
-             'js/app/*.js',
-             'js/boilerplate/*.js',
-             'examples/*.js'
-             ]
-    }
+    },
   });
 
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-jsduck');
-  grunt.loadNpmTasks("grunt-jscs");
-  grunt.registerTask('default', ['concat', 'uglify', 'jshint', 'jscs', 'jsduck']);
+  grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.registerTask('default', ['concat', 'uglify', 'jshint']);
 };

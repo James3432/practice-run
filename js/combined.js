@@ -1,5 +1,5 @@
 /**
- * HTML5 Canvas Game Boilerplate 2.2.1-14072019
+ * HTML5 Canvas Game Boilerplate 2.2.2-08032023
  * Certain components copyright their respective authors.
  *
  * @author Isaac Sukin (http://www.isaacsukin.com/)
@@ -5747,7 +5747,7 @@ var Actor = Box.extend({
    *
    * This is effectively a toggle between a top-down and side view.
    */
-  GRAVITY: false,
+  GRAVITY: true,
 
   /**
    * Gravitational acceleration in pixels per second-squared.
@@ -6989,20 +6989,25 @@ var Player = Actor.extend({
       return changed;
     }
     // left
-    if (xOffset > 0 && this.x + this.width/2 - xOffset < canvas.width * this.MOVEWORLD) {
+    if (this.lastDirection.includes('left') && xOffset > 0 && this.x + this.width/2 - xOffset < canvas.width * this.MOVEWORLD) {
+      // console.log('viewport adjusted left', this.x, this.width/2, xOffset, canvas.width * (1-this.MOVEWORLD))
       world.xOffset = Math.max(xOffset + (this.x - this.lastX), 0);
       context.translate(xOffset - world.xOffset, 0);
+      // console.log('translate left', xOffset - world.xOffset);
       changed.x = xOffset - world.xOffset;
     }
     // right
     else if (xOffset < world.width - canvas.width &&
-        this.x + this.width/2 - xOffset > canvas.width * (1-this.MOVEWORLD)) {
+        this.x + this.width/2 - xOffset > Math.ceil(canvas.width * (1-this.MOVEWORLD))) {
+          // console.log('viewport adjusted right', this.x, this.width/2, xOffset, canvas.width * (1-this.MOVEWORLD))
       world.xOffset = Math.min(xOffset + (this.x - this.lastX), world.width - canvas.width);
       context.translate(xOffset - world.xOffset, 0);
+      // console.log('translate right', xOffset - world.xOffset);
       changed.x = xOffset - world.xOffset;
     }
     // up
     if (yOffset > 0 && this.y + this.height/2 - yOffset < canvas.height * this.MOVEWORLD) {
+          // console.log('viewport adjusted up', this.x, this.width/2, xOffset, canvas.width * (1-this.MOVEWORLD))
       world.yOffset = Math.max(yOffset + (this.y - this.lastY), 0);
       context.translate(0, yOffset - world.yOffset);
       changed.y = yOffset - world.yOffset;
@@ -7010,9 +7015,12 @@ var Player = Actor.extend({
     // down
     else if (yOffset < world.height - canvas.height &&
         this.y + this.height/2 - yOffset > canvas.height * (1-this.MOVEWORLD)) {
+          // console.log('viewport adjusted down', this.x, this.width/2, xOffset, canvas.width * (1-this.MOVEWORLD))
       world.yOffset = Math.min(yOffset + (this.y - this.lastY), world.height - canvas.height);
       context.translate(0, yOffset - world.yOffset);
       changed.y = yOffset - world.yOffset;
+    } else {
+      // console.log('not...', this.x, this.width/2, xOffset, canvas.width * (1-this.MOVEWORLD));
     }
     return changed;
   },
