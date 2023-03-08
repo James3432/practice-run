@@ -11,6 +11,35 @@ var PARALLAX = 0.2;
 var secondsPerScreen = 4;
 var gameLengthSeconds = 60*60; // session never longer than 1hr
 
+var END_POINT = -1000;
+
+alertify.defaults.notifier.position = "bottom-center";
+
+// var socket = io();
+var SOCKETS_URL = "http://192.168.1.159:8080";
+socket = io(SOCKETS_URL, { forceNew: true });
+socket.on("connect", () => {
+    console.log("socket connected");
+    socket.emit("student", {nickname: 'Demo student'});
+});
+socket.on('ack!', function(msg) {
+  console.log('ACKED!');
+  console.log(msg);
+});
+socket.on('message', function(data) {
+  console.log(data);
+  alertify.success(data.message);
+});
+socket.on('walk', () => {console.log('WALK!'); autorun(true)});
+socket.on('stop', () => {console.log('STOP!'); autorun(false)});
+socket.on('success', () => {
+  console.log('SUCCESS!'); 
+  // presskey(49)
+  player.processInput("space");
+});
+socket.on('end', () => {console.log('END!'); prepareEnding()});
+socket.on('challenge', () => {console.log('CHALLENGE!'); poseChallenge()});
+
 /**
  * Keys used for various directions.
  *
@@ -42,8 +71,55 @@ var preloadables = [
   '/Users/james/Documents/Github/practice-run/img/t.png',
   '/Users/james/Documents/Github/practice-run/img/tl.png',
   '/Users/james/Documents/Github/practice-run/img/tr.png',
-
 ];
+
+function endGame() {
+  App.gameOver("Well done!!");
+  var results = document.getElementById('results-holder');
+  results.style.display = "block";
+
+}
+
+function prepareEnding() {
+  var schoolPos = world.xOffset + canvas.width + 200;
+  school.x = schoolPos;
+  END_POINT = schoolPos + 200;
+  // world.resize(schoolPos + school.width, canvas.height);
+  console.log('added school at', school.x);
+  console.log('endpoint', END_POINT);
+  console.log('currently', player.x);
+  console.log('currently', world.xOffset);
+}
+
+function poseChallenge() {
+  var r = Math.random();
+  var targetPos = world.xOffset + canvas.width + 0;
+
+  if(r < 0.5) {
+    boss.STAY_IN_WORLD = true;
+    boss.x = targetPos;
+    boss.update();
+    console.log('Boss moved to', targetPos);
+  } else {
+
+     // Add terrain.
+  var grid =  "                         CBBD            \n" +
+              "                      CBBAAAABD          \n" +
+              "                     CAAAAAAAAAD         ";
+solid = new TileMap(grid, {
+  A: '/Users/james/Documents/Github/practice-run/img/e.png',
+  B: '/Users/james/Documents/Github/practice-run/img/t.png',
+  C: '/Users/james/Documents/Github/practice-run/img/tl.png',
+  D: '/Users/james/Documents/Github/practice-run/img/tr.png',
+  }, {
+  cellSize: [40,40],
+  startCoords: [targetPos, world.height - 120]
+});
+
+
+    console.log('Terrain moved to', targetPos);
+  }
+}
 
 /**
  * A magic-named function where all updates should occur.
@@ -57,9 +133,9 @@ function update() {
   player.collideSolid(solid);
   player.collideSolid(boss);
 
-  // if(player.x > 300) {
-  // player.x = world.xOffset + 200;
-  // }
+  if(END_POINT > 0 && player.x > END_POINT) {
+    endGame();
+  }
 
   // BACKGROUND
   // if(bkgd2.x < 0) {
@@ -101,6 +177,7 @@ function draw() {
   foreground2.draw();
 
   home.draw();
+  school.draw();
 
   solid.draw();
   player.draw();
@@ -139,7 +216,7 @@ function presskey(key) {
       0, // charCode: unsigned long - the Unicode character associated with the depressed key, else 0
     );
     document.dispatchEvent(keyboardEvent);
-    }
+  }
 
 /**
  * A magic-named function for one-time setup.
@@ -150,7 +227,7 @@ function presskey(key) {
  */
 function setup(first) {
   // Change the size of the playable area. Do this before placing items!
-  world.resize(canvas.width*(gameLengthSeconds/secondsPerScreen) , canvas.height);
+  world.resize(canvas.width * (gameLengthSeconds/secondsPerScreen), canvas.height);
   world.yOffset = -FLOOR_HEIGHT;
   
   var checkbox = document.getElementById('start-stop');
@@ -197,12 +274,18 @@ function setup(first) {
   });
 
   home = new Box(-150, world.height - 451);
-  home.width = 459;
+  home.width = 663;
   home.height = 451;
   home.src = '/Users/james/Documents/Github/practice-run/img/home.png';
 
+  school = new Box(-1000, world.height - 305);
+  school.width = 554;
+  school.height = 305;
+  school.src = '/Users/james/Documents/Github/practice-run/img/school.png';
 
-  boss = new Actor(3000, 200);
+
+  boss = new Actor(-1000, 200);
+  boss.STAY_IN_WORLD = false;
   boss.width = 160;
   boss.height = 160;
   boss.src = new SpriteMap('/Users/james/Documents/Github/practice-run/img/teacher.png', {
@@ -222,9 +305,9 @@ function setup(first) {
   });
 
   // Add terrain.
-  var grid =  "                                              \n" +
-              "                      CBBBBBBBD         CBBD    \n" +
-              "                     CAAAAAAAAAD       CAAAAAAD  ";
+  var grid =  "                    \n" +
+              "                    \n" +
+              "                     ";
   solid = new TileMap(grid, {
     A: '/Users/james/Documents/Github/practice-run/img/e.png',
     B: '/Users/james/Documents/Github/practice-run/img/t.png',
@@ -233,7 +316,6 @@ function setup(first) {
   }, {
     cellSize: [40,40]
   });
-
 
   // Set up the static background layer.
   // By default, layers scroll with the world.
@@ -278,4 +360,11 @@ function setup(first) {
   hud.context.lineWidth = 3;
   // hud.context.strokeText('Score: 0', canvas.width - 15, 15);
   // hud.context.fillText('Score: 0', canvas.width - 15, 15);
+
+  if(typeof socket !== undefined) {
+    console.log('sending to socket');
+    socket.emit('game setup complete', '');
+  } else {
+    console.log('socket not ready');
+  }
 }
