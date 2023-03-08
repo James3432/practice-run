@@ -43,8 +43,16 @@
   </div> <!-- /main -->
 
   <div>
-    <span id="score-el" style="position: fixed; top:20px; right:30px;">Score: 0</span>
-  </div>
+    <div id="top-right">
+      <span id="score-el">Score: 0</span>
+    </div>
+    <div id="bottom-right">
+      <label>
+        <input id="start-stop" type="checkbox" />
+        Running override
+      </label>
+    </div>
+</div>
 
   <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
   <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>

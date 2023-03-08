@@ -34,3 +34,21 @@ canvas {
   margin: 0 auto;
   user-select: none;
 }
+
+#top-right {
+  position: fixed; 
+  top:20px; 
+  right:30px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+#bottom-right {
+  position: fixed; 
+  bottom:20px; 
+  right:30px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 6px;
+  padding: 8px 12px;
+
+}

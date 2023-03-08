@@ -5,6 +5,9 @@
  */
 var player;
 
+var FLOOR_HEIGHT = 120;
+var PARALLAX = 0.2;
+
 var secondsPerScreen = 4;
 var gameLengthSeconds = 60*60; // session never longer than 1hr
 
@@ -20,19 +23,26 @@ var gameLengthSeconds = 60*60; // session never longer than 1hr
  * set.
  */
 var keys = {
-  up: ['up', 'w'],
-  down: ['down', 's'],
-  left: ['left', 'a'],
-  right: ['right', 'd'],
+  up: ['space'],
+  down: [],
+  left: [],
+  right: ['right'],
 };
 
 /**
  * An array of image file paths to pre-load.
  */
 var preloadables = [
-  '/Users/james/Documents/Github/practice-run/bg.png',
-  '/Users/james/Documents/Github/practice-run/box.jpg',
-  '/Users/james/Documents/Github/practice-run/player.webp',
+  '/Users/james/Documents/Github/practice-run/img/bg.png',
+  '/Users/james/Documents/Github/practice-run/img/fg.png',
+  '/Users/james/Documents/Github/practice-run/img/ross-sprite.png',
+  '/Users/james/Documents/Github/practice-run/img/teacher.png',
+
+  '/Users/james/Documents/Github/practice-run/img/e.png',
+  '/Users/james/Documents/Github/practice-run/img/t.png',
+  '/Users/james/Documents/Github/practice-run/img/tl.png',
+  '/Users/james/Documents/Github/practice-run/img/tr.png',
+
 ];
 
 /**
@@ -42,19 +52,36 @@ function update() {
 
   // move
   player.update();
+  boss.update();
   // enforce collision
   player.collideSolid(solid);
+  player.collideSolid(boss);
 
   // if(player.x > 300) {
   // player.x = world.xOffset + 200;
   // }
 
-  if(world.xOffset > bkgd1.x + bkgd1.width) {
-    bkgd1.x = world.xOffset + canvas.width;
+  // BACKGROUND
+  // if(bkgd2.x < 0) {
+  //   console.log('shift bg1');
+  //   bkgd1.x = world.xOffset + (bkgd1.width / PARALLAX);
+  // }
+  // if(world.xOffset > bkgd2.x + (bkgd2.width / PARALLAX)) {
+  //   console.log('shift bg2');
+  //   bkgd2.x = world.xOffset + (bkgd2.width / PARALLAX);
+  // }
+
+  // FLOOR
+  if(world.xOffset > foreground1.x + foreground1.width) {
+    foreground1.x = foreground2.x + foreground2.width;
   }
-  if(world.xOffset > bkgd2.x + bkgd2.width) {
-    bkgd2.x = world.xOffset + canvas.width;
+  if(world.xOffset > foreground2.x + foreground2.width) {
+    foreground2.x = foreground1.x + foreground1.width;
   }
+
+  bkgd1.x = (PARALLAX * -1 * world.xOffset) % bkgd1.width;
+  bkgd2.x = (bkgd1.x < 0 ? bkgd1.x + bkgd1.width : bkgd1.x - bkgd1.width); // + (PARALLAX * -1 * world.xOffset) % bkgd1.width;
+  // bkgd2.x = 10000;//PARALLAX * -world.xOffset + (bkgd1.width / PARALLAX);
 }
 
 /**
@@ -70,13 +97,49 @@ function draw() {
 
   bkgd1.draw();
   bkgd2.draw();
+  foreground1.draw();
+  foreground2.draw();
+
+  home.draw();
+
   solid.draw();
   player.draw();
+  boss.draw();
   // bullets.draw();
   // hud.draw();
 
   document.getElementById("score-el").textContent = ("Score: " + Math.round(world.xOffset / 10));
 }
+
+function autorun(run) {
+  if(run) {
+    player.lastLooked = ['right'];
+    player.CONTINUOUS_MOVEMENT = true;
+    // presskey(39);
+  } else {
+    player.CONTINUOUS_MOVEMENT = false;
+    // presskey(40);
+  }
+}
+
+function presskey(key) {
+  var keyboardEvent = document.createEvent('KeyboardEvent');
+    var initMethod = typeof keyboardEvent.initKeyboardEvent !== 'undefined' ? 'initKeyboardEvent' : 'initKeyEvent';
+
+    keyboardEvent[initMethod](
+      'keydown', // event type: keydown, keyup, keypress
+      true, // bubbles
+      true, // cancelable
+      window, // view: should be window
+      false, // ctrlKey
+      false, // altKey
+      false, // shiftKey
+      false, // metaKey
+      key, // keyCode: unsigned long - the virtual key code, else 0
+      0, // charCode: unsigned long - the Unicode character associated with the depressed key, else 0
+    );
+    document.dispatchEvent(keyboardEvent);
+    }
 
 /**
  * A magic-named function for one-time setup.
@@ -88,42 +151,121 @@ function draw() {
 function setup(first) {
   // Change the size of the playable area. Do this before placing items!
   world.resize(canvas.width*(gameLengthSeconds/secondsPerScreen) , canvas.height);
+  world.yOffset = -FLOOR_HEIGHT;
   
+  var checkbox = document.getElementById('start-stop');
+  checkbox.addEventListener('change', (event) => {
+    autorun(event.currentTarget.checked);
+  });
+
   // Switch from side view to top-down.
   // Actor.prototype.GRAVITY = true;
   
   // Initialize the player.
-  player = new Player(200, 200);
+  player = new Player(200, world.height - 160);
+  player.width = 132;
+  player.height = 160;
 
-  player.src = '/Users/james/Documents/Github/practice-run/player.webp';
+  // player.src = '/Users/james/Documents/Github/practice-run/player.webp';
   player.MOVEWORLD = 0.8;
-  player.CONTINUOUS_MOVEMENT = true;
+  player.lastLooked = ['right'];
+  player.CONTINUOUS_MOVEMENT = false;
 
-  // solid = new Box(1000, world.height - Box.prototype.DEFAULT_HEIGHT);
-  // solid.src = '/Users/james/Documents/Github/practice-run/box.jpg';
+  player.G_CONST = 21; // gravity
+  player.JUMP_VEL = 500; // jump power
+  player.AIR_CONTROL = 1; //0.25;
+  player.MULTI_JUMP = 2; //0
+  player.JUMP_RELEASE = false;
 
+  // player.MOVEAMOUNT = 10000;
+
+
+  player.src = new SpriteMap('/Users/james/Documents/Github/practice-run/img/ross-sprite.png', {
+    stand: [1, 0, 1, 17],
+    fall: [0, 4, 0, 4, true],
+    left: [0, 0, 0, 7],
+    right: [0, 0, 0, 7],
+    lookLeft: [0, 2, 0, 2],
+    lookRight: [0, 2, 0, 2],
+    jumpLeft: [0, 4, 0, 4],
+    jumpRight: [0, 4, 0, 4],
+  }, {
+    frameW: 132,
+    frameH: 160,
+    interval: 100,
+    useTimer: false,
+  });
+
+  home = new Box(-150, world.height - 451);
+  home.width = 459;
+  home.height = 451;
+  home.src = '/Users/james/Documents/Github/practice-run/img/home.png';
+
+
+  boss = new Actor(3000, 200);
+  boss.width = 160;
+  boss.height = 160;
+  boss.src = new SpriteMap('/Users/james/Documents/Github/practice-run/img/teacher.png', {
+    stand: [0, 0, 0, 7],
+    fall: [0, 4, 0, 4, true],
+    left: [0, 0, 0, 7],
+    right: [0, 0, 0, 7],
+    lookLeft: [0, 2, 0, 2],
+    lookRight: [0, 2, 0, 2],
+    jumpLeft: [0, 4, 0, 4],
+    jumpRight: [0, 4, 0, 4],
+  }, {
+    frameW: 160,
+    frameH: 160,
+    interval: 100,
+    useTimer: false,
+  });
 
   // Add terrain.
-  var grid =  "                         B      BB        \n" +
-              "                              BBBBBB      \n" +
-              "                      BB    BBBBBBBBBB  BB";
-  solid = new TileMap(grid, {B: '/Users/james/Documents/Github/practice-run/box.jpg'});
+  var grid =  "                                              \n" +
+              "                      CBBBBBBBD         CBBD    \n" +
+              "                     CAAAAAAAAAD       CAAAAAAD  ";
+  solid = new TileMap(grid, {
+    A: '/Users/james/Documents/Github/practice-run/img/e.png',
+    B: '/Users/james/Documents/Github/practice-run/img/t.png',
+    C: '/Users/james/Documents/Github/practice-run/img/tl.png',
+    D: '/Users/james/Documents/Github/practice-run/img/tr.png',
+  }, {
+    cellSize: [40,40]
+  });
 
 
   // Set up the static background layer.
   // By default, layers scroll with the world.
   bkgd1 = new Layer({
-    src: '/Users/james/Documents/Github/practice-run/bg.png',
-    width: canvas.width,
-    height: canvas.width * (500/1024)
+    src: '/Users/james/Documents/Github/practice-run/img/bg.png',
+    width: canvas.height * (8183/1163),
+    height: canvas.height,
+    relative: 'canvas',
   });
   bkgd2 = new Layer({
-    src: '/Users/james/Documents/Github/practice-run/bg.png',
-    width: canvas.width,
-    height: canvas.width * (500/1024),
-    x: canvas.width
+    src: '/Users/james/Documents/Github/practice-run/img/bg.png',
+    width: canvas.height * (8183/1163),
+    height: canvas.height,
+    x: 8183,
+    relative: 'canvas',
   });
+ 
   // solid.draw(bkgd.context);
+
+  foreground1 = new Layer({
+    src: '/Users/james/Documents/Github/practice-run/img/fg.png',
+    width: 2000,
+    height: FLOOR_HEIGHT,
+    y: canvas.height,
+  });
+  foreground2 = new Layer({
+    src: '/Users/james/Documents/Github/practice-run/img/fg.png',
+    width: 2000,
+    height: FLOOR_HEIGHT,
+    x: 2000,
+    y: canvas.height,
+  });
 
   // Set up the Heads-Up Display layer.
   // This layer will stay in place even while the world scrolls.
