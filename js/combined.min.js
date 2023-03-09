@@ -1,5 +1,5 @@
 /**
- * HTML5 Canvas Game Boilerplate 2.2.2-08032023
+ * HTML5 Canvas Game Boilerplate 2.2.2-09032023
  * Certain components copyright their respective authors.
  *
  * @author Isaac Sukin (http://www.isaacsukin.com/)

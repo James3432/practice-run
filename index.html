@@ -44,13 +44,21 @@
 
   <div>
     <div id="top-right">
-      <span id="score-el">Score: 0</span>
+      <div id="score-el-1">Score: 0</div>
+      <div id="score-el-2">Music: 0 pages</div>
     </div>
     <div id="bottom-right">
-      <label>
-        <input id="start-stop" type="checkbox" />
-        Running override
-      </label>
+      <div style="margin-right:20px;">
+        <label>
+          <input id="start-stop" type="checkbox" />
+          Running override
+        </label>
+      </div>
+      <div>
+        <button id="btn-message">Message</button>
+        <button id="btn-challenge">Challenge</button>
+        <button id="btn-end">End</button>
+      </div>
     </div>
     <div id="results-holder" style="display:none">
       <div id="results">
@@ -75,7 +83,7 @@
   <!-- <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/themes/bootstrap.min.css"/> -->
 
 
-  <script src="http://192.168.1.159:8080/socket.io/socket.io.js"></script>
+  <script src="http://localhost:8080/socket.io/socket.io.js"></script>
   <script src="js/libraries/stats.min.js"></script>
   <script src="js/combined.min.js"></script>
   <script src="js/app/main.js"></script>
